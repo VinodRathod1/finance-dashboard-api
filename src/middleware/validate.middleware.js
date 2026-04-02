@@ -1,3 +1,1 @@
-// Validation middleware
-
 module.exports = {};
