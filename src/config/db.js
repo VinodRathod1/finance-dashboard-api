@@ -1,5 +1,6 @@
 const Database = require('better-sqlite3');
 const path = require('path');
+const bcrypt = require('bcryptjs');
 
 // Initialize the SQLite database (file-based)
 const dbPath = path.resolve(__dirname, '../../database.sqlite');
@@ -42,6 +43,20 @@ const initDatabase = () => {
         )
     `;
     db.exec(createRecordsTable);
+
+    // Create one admin user by default when the database initializes
+    const adminExists = db.prepare('SELECT id FROM users WHERE role = ?').get('admin');
+    if (!adminExists) {
+        const salt = bcrypt.genSaltSync(10);
+        const passwordHash = bcrypt.hashSync('admin123', salt);
+        
+        const insertAdmin = db.prepare(`
+            INSERT INTO users (name, email, password_hash, role, status)
+            VALUES (?, ?, ?, ?, ?)
+        `);
+        insertAdmin.run('Super Admin', 'admin@finance.com', passwordHash, 'admin', 'active');
+        console.log('Default Super Admin account created.');
+    }
 
     console.log('Database tables initialized successfully.');
 };
